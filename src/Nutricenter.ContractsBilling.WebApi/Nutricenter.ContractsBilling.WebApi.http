@@ -1,0 +1,6 @@
+@Nutricenter.ContractsBilling.WebApi_HostAddress = http://localhost:5190
+
+GET {{Nutricenter.ContractsBilling.WebApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
