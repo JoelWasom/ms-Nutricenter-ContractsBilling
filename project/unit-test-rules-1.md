@@ -59,7 +59,7 @@ Mirror `src` inside `src/Nutricenter.ContractsBilling.Test`:
 
 **Rule 5.1 (mandatory):** mock **ports only** — repositories (`IContractRepository`), unit of work (`IUnitOfWork`), domain services/generators (`IContractNumberGenerator`).
 **Rule 5.2 (mandatory):** never mock domain entities, aggregates, or value objects. Construct the real thing (`new Contract(...)`, `new SequenceNumberGenerator(...)`). Domain logic must run for real.
-**Rule 5.3 (mandatory):** every success-path handler test verifies persistence exactly once: `Verify(x => x.CreateAsync(...), Times.Once)` and `Verify(x => x.CommitAsync(...), Times.Once)`.
+**Rule 5.3 (mandatory):** every success-path handler test verifies persistence exactly once: `Verify(..., Times.Once)` on the repository call the handler actually makes (`CreateAsync`, `UpdateAsync`, `DeleteAsync`, ...), plus `Verify(x => x.CommitAsync(...), Times.Once)`.
 **Rule 5.4 (mandatory):** every failure-path handler test asserts **no commit**: `unitOfWorkMock.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Never)`.
 **Rule 5.5 (mandatory):** use precise matchers where identity carries meaning — `It.Is<T>(...)` on code/name/status. `It.IsAny<T>()` only for pass-through arguments.
 **Rule 5.6:** capture out/aggregate state with `.Callback<T>(x => created = x)` and assert the captured object's contents instead of verifying incidental collaborator calls.
@@ -68,7 +68,7 @@ Mirror `src` inside `src/Nutricenter.ContractsBilling.Test`:
 ## 6. Coverage expectations
 
 **Rule 6.1 (mandatory) — domain guards:** both branches for every guard: legal transition asserts the resulting status (`ContractStatus.Active`), illegal transition asserts `Assert.Throws<DomainException>(...)`.
-**Rule 6.2 (mandatory) — command handlers:** minimum three cases where the guard exists: success (with `Times.Once` verifications), not-found, and invalid-state.
+**Rule 6.2 (mandatory) — command handlers:** minimum three cases where the guard exists: success (with `Times.Once` verifications), not-found, and invalid-state. Where a branch does not exist in the handler, fewer cases is correct — never add a test that asserts nothing just to reach the count.
 **Rule 6.3 (mandatory):** assert outcomes, not internals — `result.IsSuccess`, state transitions, `Assert.Single`/`Assert.Empty`, captured aggregate contents. Never assert private implementation details.
 **Rule 6.4 (recommended):** when a `DomainException` message is part of the contract (user-facing text), assert the message too; otherwise assert the type only.
 **Rule 6.5:** coverage is collected with `--collect:"XPlat Code Coverage"`; the target is protection of behavior, not a percentage. Do not chase numbers with assertion-free tests.
