@@ -13,7 +13,6 @@ namespace Nutricenter.ContractsBilling.Application.Service.Commands.ServicesType
         string? NombreMicroservicio,
         string? BaseUrl,
         string? Endpoint,
-        bool IsService,
-        bool IsActive
+        bool IsService
         ) : IRequest<Result<Guid>>;
 }

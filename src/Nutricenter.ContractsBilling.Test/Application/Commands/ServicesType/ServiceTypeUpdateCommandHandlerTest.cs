@@ -25,8 +25,7 @@ namespace Nutricenter.ContractsBilling.Test.Application.Commands.ServicesType
                 "ms-hoteleria",
                 "https://hoteleria.internal",
                 "/api/rooms",
-                IsService: true,
-                IsActive: true);
+                IsService: true);
         }
 
         [Fact]
@@ -34,6 +33,7 @@ namespace Nutricenter.ContractsBilling.Test.Application.Commands.ServicesType
         {
             // Arrange
             var serviceType = CreateServiceType();
+            serviceType.Deactivate();
             var repositoryMock = new Mock<IServiceTypeRepository>();
             repositoryMock
                 .Setup(x => x.GetByIdAsync(serviceType.Id, It.IsAny<bool>()))
@@ -60,6 +60,7 @@ namespace Nutricenter.ContractsBilling.Test.Application.Commands.ServicesType
             Assert.Equal(command.BaseUrl, updated.BaseUrl);
             Assert.Equal(command.Endpoint, updated.Endpoint);
             Assert.Equal(command.IsService, updated.IsService);
+            Assert.False(updated.IsActive);
             repositoryMock.Verify(
                 x => x.UpdateAsync(It.Is<ServiceType>(e =>
                     e.Id == serviceType.Id
