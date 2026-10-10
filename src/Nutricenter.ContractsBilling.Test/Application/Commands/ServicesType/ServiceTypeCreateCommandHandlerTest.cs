@@ -9,16 +9,18 @@ namespace Nutricenter.ContractsBilling.Test.Application.Commands.ServicesType
     public class ServiceTypeCreateCommandHandlerTest
     {
         [Fact]
-        public async Task HandlerTest()
+        public async Task Handle_ValidCommand_ShouldCreateServiceTypeAndCommit()
         {
-            //Arrange
+            // Arrange
             var repositoryMock = new Mock<IServiceTypeRepository>();
             var unitOfWorkMock = new Mock<IUnitOfWork>();
-            var handler = new ServiceTypeCreateCommandHandler(repositoryMock.Object, unitOfWorkMock.Object); ;
+            var handler = new ServiceTypeCreateCommandHandler(repositoryMock.Object, unitOfWorkMock.Object);
             var command = new ServiceTypeCreateCommand("HOTE", "Hoteleria");
-            //Act
+
+            // Act
             var result = await handler.Handle(command, CancellationToken.None);
-            //Assert
+
+            // Assert
             Assert.True(result.IsSuccess);
             repositoryMock.Verify(x => x.CreateAsync(It.Is<ServiceType>(i => i.Codigo == command.Codigo && i.Nombre == command.Nombre)), Times.Once);
             unitOfWorkMock.Verify(x => x.CommitAsync(CancellationToken.None), Times.Once);
