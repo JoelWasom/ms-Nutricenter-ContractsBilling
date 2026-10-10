@@ -17,7 +17,7 @@ Load this skill when asked to verify, audit, or check generated tests. It normal
 - Never edit the test, the production code, or the rules file. This skill reports only — fixing is a separate, authorized step.
 - Never mark a check `PASS` you did not observe. Evidence that cannot be gathered is `UNKNOWN`, not pass.
 - Run the suite exactly once. No retries, no `--filter` to isolate failures, no skipped tests, no suppressing warnings.
-- Report failure output verbatim. Attribute a warning to the target only by its source file path; never compare warning counts between runs, because incremental builds make them incomparable.
+- Report failure output verbatim. Attribute a warning to the target by its source file path, using the `[...csproj]` suffix as the project discriminator; never compare warning counts between runs, because incremental builds make them incomparable.
 
 ## Decision Gates
 
@@ -32,14 +32,14 @@ Load this skill when asked to verify, audit, or check generated tests. It normal
 ## Execution Steps
 
 1. Read `project/unit-test-rules-1.md`.
-2. Locate the target test file; when none is named, take every file under `src/Nutricenter.ContractsBilling.Test`.
+2. Locate the target test file; when none is named, take every file under `src/Nutricenter.ContractsBilling.Test`. Find the handler by its type name — production folders do not mirror test namespaces, and the csproj directory may differ from both, so glob by type rather than by path.
 3. Audit every applicable rule in that file. The usual hot spots are file and method naming, folder placement, one Act, `[Fact]` default, factory helpers, no `using Xunit;`, real domain objects with mocked ports, `Times.Once` on success and `Times.Never` on failure, and guard coverage on both branches. This list is a starting point, not the full rule set — the rules file governs. Verify the persistence call the handler actually makes, which is not always `CreateAsync`.
 4. Run `dotnet test src/Nutricenter.ContractsBilling.Test/Nutricenter.ContractsBilling.Test.csproj --nologo` once and capture the literal result line.
 5. Classify the outcome and hand back every violation found.
 
 ## Output Contract
 
-Return an overall verdict of `PASS`, `FAIL`, or `UNKNOWN`; a rule-by-rule table with rule number, status (`PASS`, `FAIL`, `UNKNOWN`, or `N/A` when the rule does not apply to this target), and evidence; the literal `dotnet test` result line; the warnings attributed to the target's project or `none`; and for each blocker the file, rule number, and the change required. Never return `PASS` while any mandatory rule is violated or any required check is unrun.
+Return an overall verdict of `PASS`, `FAIL`, or `UNKNOWN`; a rule-by-rule table with rule number, status (`PASS`, `FAIL`, `UNKNOWN`, `N/A` when the rule does not apply to this target, or `ADVISORY` when a recommended non-mandatory rule is unmet), and evidence; the literal `dotnet test` result line; the warnings attributed to the target's project or `none`; and for each blocker the file, rule number, and the change required. Never return `PASS` while any mandatory rule is violated or any required check is unrun.
 
 ## References
 
