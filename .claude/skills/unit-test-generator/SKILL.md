@@ -20,6 +20,7 @@ Load this skill whenever the user asks to write, add, or generate a unit test in
 - Build real domain objects; mock ports only. Success asserts `Times.Once` on `CreateAsync`/`CommitAsync`, failure asserts `Times.Never`.
 - Never add `using Xunit;` — it is a global import in the test project.
 - Test code, identifiers, and comments are written in English.
+- Create test files only. Never run `dotnet test`, `dotnet build`, or any other command — the caller owns verification.
 
 ## Decision Gates
 
@@ -36,11 +37,10 @@ Load this skill whenever the user asks to write, add, or generate a unit test in
 2. Read the type under test plus one sibling test file to match the local arrangement pattern.
 3. Pick the matching decision row and target file; create the file if it does not exist.
 4. Add `private static` factory helpers for repeated arrange data instead of inline duplication.
-5. Run `dotnet test src/Nutricenter.ContractsBilling.Test/Nutricenter.ContractsBilling.Test.csproj --nologo` and capture the observed result.
 
 ## Output Contract
 
-Return the target file path, the test method names created, the literal `dotnet test` result, and any rule you could not satisfy with its reason. Never claim a pass you did not observe.
+Return the target file path, the test method names created, any rule you could not satisfy with its reason, and the runner command for the caller to execute. State explicitly that tests were not run — never imply a pass you did not observe.
 
 ## References
 
