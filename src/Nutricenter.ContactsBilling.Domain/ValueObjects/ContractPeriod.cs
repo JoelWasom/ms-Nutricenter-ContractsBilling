@@ -4,9 +4,9 @@ namespace Nutricenter.ContractsBilling.Domain.ValueObjects
 {
     public sealed class ContractPeriod : ValueObject
     {
-        public DateOnly StartDate { get; }
+        public DateOnly StartDate { get; set; }
 
-        public DateOnly EndDate { get; }
+        public DateOnly EndDate { get; set; }
 
         public ContractPeriod(DateOnly startDate, DateOnly endDate)
         {
@@ -17,11 +17,9 @@ namespace Nutricenter.ContractsBilling.Domain.ValueObjects
             EndDate = endDate;
         }
 
-        public int TotalDays =>
-            EndDate.DayNumber - StartDate.DayNumber;
+        public int TotalDays => EndDate.DayNumber - StartDate.DayNumber;
 
-        public bool IsActive(DateOnly today)
-            => today >= StartDate && today <= EndDate;
+        public bool IsActive(DateOnly today) => today >= StartDate && today <= EndDate;
 
         protected override IEnumerable<object> GetEqualityComponents()
         {

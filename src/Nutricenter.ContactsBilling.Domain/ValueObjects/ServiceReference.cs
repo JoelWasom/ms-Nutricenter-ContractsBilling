@@ -6,18 +6,18 @@ namespace Nutricenter.ContractsBilling.Domain.ValueObjects
     public sealed partial class ServiceReference: ValueObject
     {
         public ServiceReference() { }
-        public ServiceReference(string serviceId, Guid serviceTypeId, string source)
+        public ServiceReference(string serviceId, string descripcion)
         {
             if (string.IsNullOrWhiteSpace(serviceId)) { throw new DomainException(new Error("ServiceId", "ServiceId is required.", ErrorType.Validation)); }
+            ServiceId = serviceId.Trim().ToUpperInvariant();
+            Descripcion = descripcion.Trim();
         }
-
         public string ServiceId { get; set; }
-        public Guid ServiceTypeId { get; set; }
-        public string Source { get; set; }
+        public string Descripcion { get; set; }
         protected override IEnumerable<object?> GetEqualityComponents()
         {
             yield return ServiceId;
-            yield return ServiceTypeId;
+            yield return Descripcion;
         }
     }
 }
