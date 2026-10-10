@@ -1,0 +1,18 @@
+[
+  {
+    "serviceTypeId": "11111111-1111-1111-1111-111111111111",
+    "serviceId": "cat-001",
+    "description": "Desayuno Ejecutivo",
+    "unitPrice": 45,
+    "durationDays": 30,
+    "origin": "CATERING"
+  },
+  {
+    "serviceTypeId": "11111111-1111-1111-1111-111111111111",
+    "serviceId": "cat-002",
+    "description": "Almuerzo Ejecutivo",
+    "unitPrice": 60,
+    "durationDays": 30,
+    "origin": "CATERING"
+  }
+]

@@ -1,0 +1,20 @@
+<Solution>
+  <Folder Name="/00. API/">
+    <Project Path="src/Nutricenter.ContractsBilling.WebApi/Nutricenter.ContractsBilling.WebApi.csproj" Id="d125cea6-f186-4863-b241-b83a4279a259" />
+  </Folder>
+  <Folder Name="/01. Application/">
+    <Project Path="src/Nutricenter.ContractsBilling.Application.Service.EventHandlers/Nutricenter.ContractsBilling.Application.Service.csproj" Id="044dc0b2-adaf-4d0d-9680-5ccf0d57d02f" />
+  </Folder>
+  <Folder Name="/02. Domain/">
+    <Project Path="src/Nutricenter.ContactsBilling.Domain/Nutricenter.ContractsBilling.Domain.csproj" />
+  </Folder>
+  <Folder Name="/03. Infranstructure/">
+    <Project Path="src/Nutricenter.ContractsBilling.Infrastructure/Nutricenter.ContractsBilling.Infrastructure.csproj" Id="144b0e20-a23b-4570-9437-4a49ee8466a3" />
+  </Folder>
+  <Folder Name="/04. Common/">
+    <Project Path="src/Nutricenter.BuildingBlocks/Nutricenter.BuildingBlocks.csproj" Id="600609e7-a7b0-448e-8dc4-775810239104" />
+  </Folder>
+  <Folder Name="/05. Test/">
+    <Project Path="src/Nutricenter.ContractsBilling.Test/Nutricenter.ContractsBilling.Test.csproj" Id="d1053f54-823b-40ef-a0bc-f2ee9022bc00" />
+  </Folder>
+</Solution>
