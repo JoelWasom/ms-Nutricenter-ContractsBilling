@@ -1,5 +1,6 @@
 using Moq;
 using Nutricenter.BuildingBlocks.Abstractions;
+using Nutricenter.BuildingBlocks.Results;
 using Nutricenter.ContractsBilling.Application.Service.Commands.Contracts;
 using Nutricenter.ContractsBilling.Application.Service.DTOs;
 using Nutricenter.ContractsBilling.Domain.Interfaces.Repositories;
@@ -21,6 +22,14 @@ namespace Nutricenter.ContractsBilling.Test.Application.Commands.Contract
                 new(Guid.NewGuid(), "SVC-001", "Hoteleria", 100m, 1, 30)
             }
         };
+
+        private static ContractCreateCommand CreateCommandWithDuplicatedService()
+        {
+            var command = CreateCommand();
+            command.Servicios.Add(new ContractServiceCreateDTO(
+                Guid.NewGuid(), "SVC-001", "Hoteleria", 100m, 1, 30));
+            return command;
+        }
 
         [Fact]
         public async Task Handle_WithServices_ShouldCreateContractAndCommit()
@@ -52,6 +61,26 @@ namespace Nutricenter.ContractsBilling.Test.Application.Commands.Contract
             numberGeneratorMock.Verify(x => x.GenerateAsync("CTR"), Times.Once);
             repositoryMock.Verify(x => x.CreateAsync(It.IsAny<ContractAggregate>()), Times.Once);
             unitOfWorkMock.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task Handle_WithDuplicatedService_ShouldThrowDomainExceptionWithoutPersisting()
+        {
+            // Arrange
+            var repositoryMock = new Mock<IContractRepository>();
+            var numberGeneratorMock = new Mock<IContractNumberGenerator>();
+            var unitOfWorkMock = new Mock<IUnitOfWork>();
+            numberGeneratorMock
+                .Setup(x => x.GenerateAsync(It.IsAny<string>()))
+                .ReturnsAsync(new SequenceNumberGenerator("CTR-2026-00001"));
+            var handler = new ContractCreateCommandHandler(
+                repositoryMock.Object, numberGeneratorMock.Object, unitOfWorkMock.Object);
+            var command = CreateCommandWithDuplicatedService();
+
+            // Act + Assert
+            await Assert.ThrowsAsync<DomainException>(() => handler.Handle(command, CancellationToken.None));
+            repositoryMock.Verify(x => x.CreateAsync(It.IsAny<ContractAggregate>()), Times.Never);
+            unitOfWorkMock.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
         }
     }
 }

@@ -29,6 +29,16 @@ namespace Nutricenter.ContractsBilling.Test.Application.Commands.Contract
             return contract;
         }
 
+        private static ContractAggregate CreateDraftContract()
+        {
+            return new ContractAggregate(
+                Guid.NewGuid(),
+                new SequenceNumberGenerator("CTR-2026-00001"),
+                new ContractPeriod(new DateOnly(2026, 1, 1), new DateOnly(2026, 12, 31)));
+        }
+
+        private static ContractSuspendedCommand CreateCommand(Guid contractId) => new(contractId);
+
         [Fact]
         public async Task Handle_ActiveContract_ShouldSuspendAndCommit()
         {
@@ -42,12 +52,13 @@ namespace Nutricenter.ContractsBilling.Test.Application.Commands.Contract
             var handler = new ContractSuspendedCommandHandler(repositoryMock.Object, unitOfWorkMock.Object);
 
             // Act
-            var result = await handler.Handle(new ContractSuspendedCommand(contract.Id), CancellationToken.None);
+            var result = await handler.Handle(CreateCommand(contract.Id), CancellationToken.None);
 
             // Assert
             Assert.True(result.IsSuccess);
             Assert.True(result.Value);
             Assert.Equal(ContractStatus.Suspended, contract.Estado);
+            repositoryMock.Verify(x => x.GetByIdAsync(contract.Id, It.IsAny<bool>()), Times.Once);
             unitOfWorkMock.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
@@ -59,12 +70,31 @@ namespace Nutricenter.ContractsBilling.Test.Application.Commands.Contract
             repositoryMock
                 .Setup(x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<bool>()))
                 .ReturnsAsync((ContractAggregate?)null);
-            var handler = new ContractSuspendedCommandHandler(
-                repositoryMock.Object, new Mock<IUnitOfWork>().Object);
+            var unitOfWorkMock = new Mock<IUnitOfWork>();
+            var handler = new ContractSuspendedCommandHandler(repositoryMock.Object, unitOfWorkMock.Object);
 
             // Act + Assert
             await Assert.ThrowsAsync<DomainException>(() => handler.Handle(
-                new ContractSuspendedCommand(Guid.NewGuid()), CancellationToken.None));
+                CreateCommand(Guid.NewGuid()), CancellationToken.None));
+            unitOfWorkMock.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task Handle_DraftContract_ShouldThrowDomainExceptionWithoutCommitting()
+        {
+            // Arrange
+            var contract = CreateDraftContract();
+            var repositoryMock = new Mock<IContractRepository>();
+            repositoryMock
+                .Setup(x => x.GetByIdAsync(contract.Id, It.IsAny<bool>()))
+                .ReturnsAsync(contract);
+            var unitOfWorkMock = new Mock<IUnitOfWork>();
+            var handler = new ContractSuspendedCommandHandler(repositoryMock.Object, unitOfWorkMock.Object);
+
+            // Act + Assert
+            await Assert.ThrowsAsync<DomainException>(() => handler.Handle(
+                CreateCommand(contract.Id), CancellationToken.None));
+            unitOfWorkMock.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
         }
     }
 }

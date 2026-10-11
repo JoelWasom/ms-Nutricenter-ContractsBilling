@@ -19,6 +19,8 @@ namespace Nutricenter.ContractsBilling.Test.Application.Commands.Contract
                 new ContractPeriod(new DateOnly(2026, 1, 1), new DateOnly(2026, 12, 31)));
         }
 
+        private static ContractCancelCommand CreateCommand(Guid contractId) => new(contractId);
+
         [Fact]
         public async Task Handle_ExistingContract_ShouldCancelAndCommit()
         {
@@ -32,12 +34,13 @@ namespace Nutricenter.ContractsBilling.Test.Application.Commands.Contract
             var handler = new ContractCancelCommandHandler(repositoryMock.Object, unitOfWorkMock.Object);
 
             // Act
-            var result = await handler.Handle(new ContractCancelCommand(contract.Id), CancellationToken.None);
+            var result = await handler.Handle(CreateCommand(contract.Id), CancellationToken.None);
 
             // Assert
             Assert.True(result.IsSuccess);
             Assert.True(result.Value);
             Assert.Equal(ContractStatus.Cancelled, contract.Estado);
+            repositoryMock.Verify(x => x.GetByIdAsync(contract.Id, It.IsAny<bool>()), Times.Once);
             unitOfWorkMock.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
@@ -49,12 +52,13 @@ namespace Nutricenter.ContractsBilling.Test.Application.Commands.Contract
             repositoryMock
                 .Setup(x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<bool>()))
                 .ReturnsAsync((ContractAggregate?)null);
-            var handler = new ContractCancelCommandHandler(
-                repositoryMock.Object, new Mock<IUnitOfWork>().Object);
+            var unitOfWorkMock = new Mock<IUnitOfWork>();
+            var handler = new ContractCancelCommandHandler(repositoryMock.Object, unitOfWorkMock.Object);
 
             // Act + Assert
             await Assert.ThrowsAsync<DomainException>(() => handler.Handle(
-                new ContractCancelCommand(Guid.NewGuid()), CancellationToken.None));
+                CreateCommand(Guid.NewGuid()), CancellationToken.None));
+            unitOfWorkMock.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
         }
     }
 }

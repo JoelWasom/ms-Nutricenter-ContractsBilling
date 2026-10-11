@@ -31,6 +31,8 @@ namespace Nutricenter.ContractsBilling.Test.Application.Commands.Contract
             return contract;
         }
 
+        private static ContractActivateCommand CreateCommand(Guid contractId) => new(contractId);
+
         [Fact]
         public async Task Handle_DraftWithServices_ShouldActivateAndCommit()
         {
@@ -44,12 +46,13 @@ namespace Nutricenter.ContractsBilling.Test.Application.Commands.Contract
             var handler = new ContractActivateCommandHandler(repositoryMock.Object, unitOfWorkMock.Object);
 
             // Act
-            var result = await handler.Handle(new ContractActivateCommand(contract.Id), CancellationToken.None);
+            var result = await handler.Handle(CreateCommand(contract.Id), CancellationToken.None);
 
             // Assert
             Assert.True(result.IsSuccess);
             Assert.True(result.Value);
             Assert.Equal(ContractStatus.Active, contract.Estado);
+            repositoryMock.Verify(x => x.GetByIdAsync(contract.Id, It.IsAny<bool>()), Times.Once);
             unitOfWorkMock.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
@@ -61,12 +64,13 @@ namespace Nutricenter.ContractsBilling.Test.Application.Commands.Contract
             repositoryMock
                 .Setup(x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<bool>()))
                 .ReturnsAsync((ContractAggregate?)null);
-            var handler = new ContractActivateCommandHandler(
-                repositoryMock.Object, new Mock<IUnitOfWork>().Object);
+            var unitOfWorkMock = new Mock<IUnitOfWork>();
+            var handler = new ContractActivateCommandHandler(repositoryMock.Object, unitOfWorkMock.Object);
 
             // Act + Assert
             await Assert.ThrowsAsync<DomainException>(() => handler.Handle(
-                new ContractActivateCommand(Guid.NewGuid()), CancellationToken.None));
+                CreateCommand(Guid.NewGuid()), CancellationToken.None));
+            unitOfWorkMock.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
@@ -78,12 +82,13 @@ namespace Nutricenter.ContractsBilling.Test.Application.Commands.Contract
             repositoryMock
                 .Setup(x => x.GetByIdAsync(contract.Id, It.IsAny<bool>()))
                 .ReturnsAsync(contract);
-            var handler = new ContractActivateCommandHandler(
-                repositoryMock.Object, new Mock<IUnitOfWork>().Object);
+            var unitOfWorkMock = new Mock<IUnitOfWork>();
+            var handler = new ContractActivateCommandHandler(repositoryMock.Object, unitOfWorkMock.Object);
 
             // Act + Assert
             await Assert.ThrowsAsync<DomainException>(() => handler.Handle(
-                new ContractActivateCommand(contract.Id), CancellationToken.None));
+                CreateCommand(contract.Id), CancellationToken.None));
+            unitOfWorkMock.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
         }
     }
 }

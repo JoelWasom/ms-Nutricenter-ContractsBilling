@@ -27,6 +27,16 @@ namespace Nutricenter.ContractsBilling.Test.Application.Commands.Contract
             return contract;
         }
 
+        private static ContractAggregate CreateActiveContractWithService()
+        {
+            var contract = CreateDraftContractWithService();
+            contract.Activate();
+            return contract;
+        }
+
+        private static ContractRemoveServiceCommand CreateCommand(Guid contractId, Guid contractedServiceId) =>
+            new(contractId, contractedServiceId);
+
         [Fact]
         public async Task Handle_ExistingService_ShouldRemoveAndCommit()
         {
@@ -42,12 +52,13 @@ namespace Nutricenter.ContractsBilling.Test.Application.Commands.Contract
 
             // Act
             var result = await handler.Handle(
-                new ContractRemoveServiceCommand(contract.Id, serviceId), CancellationToken.None);
+                CreateCommand(contract.Id, serviceId), CancellationToken.None);
 
             // Assert
             Assert.True(result.IsSuccess);
             Assert.True(result.Value);
             Assert.Empty(contract.Services);
+            repositoryMock.Verify(x => x.GetByIdAsync(contract.Id, It.IsAny<bool>()), Times.Once);
             unitOfWorkMock.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
@@ -59,12 +70,32 @@ namespace Nutricenter.ContractsBilling.Test.Application.Commands.Contract
             repositoryMock
                 .Setup(x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<bool>()))
                 .ReturnsAsync((ContractAggregate?)null);
-            var handler = new ContractRemoveServiceCommandHandler(
-                repositoryMock.Object, new Mock<IUnitOfWork>().Object);
+            var unitOfWorkMock = new Mock<IUnitOfWork>();
+            var handler = new ContractRemoveServiceCommandHandler(repositoryMock.Object, unitOfWorkMock.Object);
 
             // Act + Assert
             await Assert.ThrowsAsync<DomainException>(() => handler.Handle(
-                new ContractRemoveServiceCommand(Guid.NewGuid(), Guid.NewGuid()), CancellationToken.None));
+                CreateCommand(Guid.NewGuid(), Guid.NewGuid()), CancellationToken.None));
+            unitOfWorkMock.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task Handle_ActiveContract_ShouldThrowDomainExceptionWithoutCommitting()
+        {
+            // Arrange
+            var contract = CreateActiveContractWithService();
+            var serviceId = contract.Services.Single().Id;
+            var repositoryMock = new Mock<IContractRepository>();
+            repositoryMock
+                .Setup(x => x.GetByIdAsync(contract.Id, It.IsAny<bool>()))
+                .ReturnsAsync(contract);
+            var unitOfWorkMock = new Mock<IUnitOfWork>();
+            var handler = new ContractRemoveServiceCommandHandler(repositoryMock.Object, unitOfWorkMock.Object);
+
+            // Act + Assert
+            await Assert.ThrowsAsync<DomainException>(() => handler.Handle(
+                CreateCommand(contract.Id, serviceId), CancellationToken.None));
+            unitOfWorkMock.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
         }
     }
 }
